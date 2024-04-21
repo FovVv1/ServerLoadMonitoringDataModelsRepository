@@ -13,15 +13,8 @@ namespace ServerLoadMonitoringDataModels
 {
     public class DatabaseUtilization : IMetric, ICloneable
     {
-        // Временно
-        public float CpuUsage { get; set; }
-
-        public float UsedMemoryPercents { get; set; }
-        //
         public DatabaseUtilization()
         {
-            this.UsedMemoryPercents = 0;
-            this.CpuUsage = new float();
             this.RefreshingData = DateTime.Now;
             this.MicroservicesProceduresCount = new List<ProcedureCounter>();
             this.StoredProcedures = new List<string>();
@@ -32,8 +25,6 @@ namespace ServerLoadMonitoringDataModels
 
         public DatabaseUtilization(string ip, MetricType type, long checkInterval)
         {
-            this.UsedMemoryPercents = 0;
-            this.CpuUsage = new float();
             this.RefreshingData = DateTime.Now;
             this.Ip = ip;
             this.Type = type;
@@ -179,7 +170,7 @@ namespace ServerLoadMonitoringDataModels
                     db.Open();
 
                     // Получение списка хранимых процедур
-                    var storedProcedures = db.Query<string>("GetAllStoredProcedures", commandType: CommandType.StoredProcedure).ToList();
+                    var storedProcedures = db.Query<string>("ServerLoadMonitoring_GetAllStoredProcedures", commandType: CommandType.StoredProcedure).ToList();
                     this.StoredProcedures = storedProcedures;
                     // Создание нового списка ProcedureCounter
                     var procedureCounters = new List<ProcedureCounter>();

@@ -13,7 +13,7 @@ namespace ServerLoadMonitoringDataModels
         string Ip { get; set; }
 
         int UsersCount { get; set; }
-        int CollectionNumber {  get; set; }
+        int CollectionNumber { get; set; }
         int Placement { get; set; }
         DateTime RefreshingData { get; set; }
         MetricType Type { get; set; }
@@ -25,12 +25,9 @@ namespace ServerLoadMonitoringDataModels
 
         object Clone();
         //Временная мера и ненужное
-        List<ProcedureCounter> MicroservicesProceduresCount { get; set; }
-
-        float CpuUsage { get; set; }
-
-        float UsedMemoryPercents { get; set; }
-
-        //
+        List<ProcedureCounter> MicroservicesProceduresCount
+        {
+            get; set;
+        }
     }
 }

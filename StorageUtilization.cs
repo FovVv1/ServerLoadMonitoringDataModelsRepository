@@ -19,11 +19,9 @@ namespace ServerLoadMonitoringDataModels
     public class StorageUtilization : IMetric, ICloneable
     {
         //Временная мера  и ненужное 
-        public float CpuUsage { get; set; }
 
         public List<ProcedureCounter> MicroservicesProceduresCount { get; set; }
 
-        public float UsedMemoryPercents { get; set; }
         //
 
         public DateTime RefreshingData { get; set; }
@@ -32,8 +30,6 @@ namespace ServerLoadMonitoringDataModels
         /// </summary>
         public StorageUtilization()
         {
-            this.UsedMemoryPercents = new float();
-            this.CpuUsage = new float();
             this.Placement = 0;
             this.CollectionNumber = 0;
             this.MicroservicesProceduresCount = new List<ProcedureCounter>();
@@ -41,8 +37,6 @@ namespace ServerLoadMonitoringDataModels
         }
         public StorageUtilization(string ip, MetricType type, long checkInterval)
         {
-            this.UsedMemoryPercents = new float();
-            this.CpuUsage = new float();
             this.Ip = ip;
             this.Type = type;
             // для преобразования секунд в тики

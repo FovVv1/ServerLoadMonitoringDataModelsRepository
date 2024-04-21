@@ -22,6 +22,9 @@ using System.Security;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Controls.Primitives;
+using Microsoft.Win32;
+using System;
+using System.Windows.Forms;
 
 namespace ServerLoadMonitoringDataModels 
 {
@@ -89,15 +92,17 @@ namespace ServerLoadMonitoringDataModels
         public float GpuUsage { get; set; }
         public float CpuUsage { get; set; }
         public int Processes { get; set; }
-        public float UsedMemory { get; set; }
         public float currentClockSpeed { get; set; }
+        public float maxClockSpeed { get; set; }
         //
         public int Threads { get; set; }
         public TimeSpan UpTime { get; set; }
         public string processorName { get; set; }
         public string numberOfCores { get; set; }
-        public float  maxClockSpeed { get; set; }
+        
         public float InstalledMemory { get; set; }
+
+        public float UsedMemory { get; set; }
         public float UsedMemoryPercents { get; set; }
         public float DiskUsage { get; set; }
         public float DiskReads { get; set; }
@@ -662,6 +667,56 @@ namespace ServerLoadMonitoringDataModels
                     }
                 }
                 }
+            catch (Exception e)
+            {
+                LogManager.GetCurrentClassLogger().Error(e.ToString().Replace("\r\n", ""));
+
+            }
+        }
+        public void GetMetric3(ElConnectionClient elConnectionClient, ElMessageServer elMessageServer)
+        {
+            try
+            {
+
+                UsersCount = elConnectionClient.ServerControlManager.ConnectionsControl.ActiveConnections.Count;
+                // Получение использования процессора
+                using (PerformanceCounter cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total"))
+                {
+                    cpuCounter.NextValue(); // Начальное значение, требуется для корректного чтения
+                    System.Threading.Thread.Sleep(1000); // Ожидание для получения актуальных данных
+                    this.CpuUsage = cpuCounter.NextValue();
+                }
+
+                // Получение метрик диска
+                using (PerformanceCounter diskReadCounter = new PerformanceCounter("PhysicalDisk", "Disk Read Bytes/sec", "_Total"))
+                {
+                    this.DiskReads = diskReadCounter.NextValue();
+                }
+                using (PerformanceCounter diskWriteCounter = new PerformanceCounter("PhysicalDisk", "Disk Write Bytes/sec", "_Total"))
+                {
+                    this.DiskWrites = diskWriteCounter.NextValue();
+                }
+               
+                using (PerformanceCounter diskUsageCounter = new PerformanceCounter("PhysicalDisk", "% Disk Time", "_Total"))
+                {
+                    this.DiskUsage = diskUsageCounter.NextValue();
+                }
+                
+
+                // Получение информации о системе
+                this.UpTime = TimeSpan.FromSeconds(Environment.TickCount / 1000);
+              
+                this.Processes = Process.GetProcesses().Length;
+                
+                int threadCount = 0;
+                foreach (Process process in Process.GetProcesses())
+                {
+                    threadCount += process.Threads.Count;
+                }
+                this.Threads = threadCount;
+
+                
+            }
             catch (Exception e)
             {
                 LogManager.GetCurrentClassLogger().Error(e.ToString().Replace("\r\n", ""));

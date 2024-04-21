@@ -112,6 +112,7 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -155,6 +156,7 @@
     <Compile Include="ServerLoadMonitoring.cs" />
     <Compile Include="StorageMetricCollector.cs" />
     <Compile Include="StorageUtilization.cs" />
+    <Compile Include="TaskCountItem.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
