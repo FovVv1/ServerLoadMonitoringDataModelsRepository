@@ -12,6 +12,8 @@ namespace ServerLoadMonitoringDataModels
     {
         string Ip { get; set; }
 
+        float CpuUsage { get; set; }
+        float UsedMemoryPercents { get; set; }
         int UsersCount { get; set; }
         int CollectionNumber { get; set; }
         int Placement { get; set; }

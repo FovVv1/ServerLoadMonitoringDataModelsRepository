@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Management;
+using static NLog.LayoutRenderers.Wrappers.ReplaceLayoutRendererWrapper;
 
 namespace ServerLoadMonitoringDataModels
 {
@@ -21,6 +23,8 @@ namespace ServerLoadMonitoringDataModels
             this.Placement = 0;
             this.CollectionNumber = 0;
             this.UsersCount = 0;
+            this.UsedMemoryPercents = 0;
+            this.CpuUsage = 0;
         }
 
         public DatabaseUtilization(string ip, MetricType type, long checkInterval)
@@ -34,6 +38,9 @@ namespace ServerLoadMonitoringDataModels
             this.Placement = 0;
             this.CollectionNumber = 0;
             this.UsersCount = 0;
+            this.UsedMemoryPercents = 0;
+            this.CpuUsage = 0;
+
         }
         public int UsersCount { get; set; }
         public int CollectionNumber {  get; set; }
@@ -50,6 +57,14 @@ namespace ServerLoadMonitoringDataModels
         public int UsedTransactionLogSpaceBytes { get; set; }
         public int FreeTransactionLogSpaceBytes { get; set; }
         public int NumberOfStoredProcedures { get; set; }
+
+        public float CpuUsage { get; set; }
+        public float UsedMemoryPercents { get; set; }
+        //public int CpuTime { get; set; }
+        //public int MemoryUsagePercentage { get; set; }
+
+
+
         public List<string> StoredProcedures { get; set; }
         
         public List<ProcedureCounter> MicroservicesProceduresCount { get; set; }
@@ -63,6 +78,7 @@ namespace ServerLoadMonitoringDataModels
                 
                 using (SqlConnection db = new SqlConnection(elConnectionClient.ServerControlManager.DataBaseControl.DbConnectionString))
                 {
+                    
                     db.Open();
 
                     // Получение списка хранимых процедур
@@ -167,8 +183,71 @@ namespace ServerLoadMonitoringDataModels
             {
                 using (SqlConnection db = new SqlConnection(elConnectionClient.ServerControlManager.DataBaseControl.DbConnectionString))
                 {
-                    db.Open();
+                    using (var searcher = new ManagementObjectSearcher("SELECT LoadPercentage FROM Win32_Processor"))
+                    {
+                        foreach (var obj in searcher.Get())
+                        {
+                            try
+                            {
+                                this.CpuUsage = obj["LoadPercentage"] != null ? float.Parse(obj["LoadPercentage"].ToString()) : 0;
+                            }
+                            catch (Exception e)
+                            {
+                                this.CpuUsage = 0;
+                                LogManager.GetCurrentClassLogger().Error("Ошибка при получении CpuUsage: " + e.ToString().Replace("\r\n", ""));
+                            }
+                        }
+                    }
+                    using (var osSearcher = new ManagementObjectSearcher("SELECT TotalVisibleMemorySize, FreePhysicalMemory FROM Win32_OperatingSystem"))
+                    {
+                        foreach (var osObj in osSearcher.Get())
+                        {
+                            float InstalledMemory;
+                            float UsedMemory;
+                            try
+                            {
+                                InstalledMemory = osObj["TotalVisibleMemorySize"] != null ? float.Parse(osObj["TotalVisibleMemorySize"].ToString()) / (1024 * 1024) : 0;
+                            }
+                            catch (Exception e)
+                            {
+                                InstalledMemory = 0;
+                                LogManager.GetCurrentClassLogger().Error("Ошибка при получении InstalledMemory: " + e.ToString().Replace("\r\n", ""));
+                            }
 
+                            try
+                            {
+                                UsedMemory = (osObj["TotalVisibleMemorySize"] != null && osObj["FreePhysicalMemory"] != null) ?
+                                    (float.Parse(osObj["TotalVisibleMemorySize"].ToString()) - float.Parse(osObj["FreePhysicalMemory"].ToString())) / (1024 * 1024) : 0;
+                            }
+                            catch (Exception e)
+                            {
+                                UsedMemory = 0;
+                                LogManager.GetCurrentClassLogger().Error("Ошибка при получении UsedMemory: " + e.ToString().Replace("\r\n", ""));
+                            }
+
+                            try
+                            {
+                                this.UsedMemoryPercents = (float)(Math.Round((UsedMemory * 100) / (InstalledMemory > 0 ? InstalledMemory : 1)));
+                            }
+                            catch (Exception e)
+                            {
+                                this.UsedMemoryPercents = 0;
+                                LogManager.GetCurrentClassLogger().Error("Ошибка при получении UsedMemoryPercents: " + e.ToString().Replace("\r\n", ""));
+                            }
+                        }
+                    }
+
+                            db.Open();
+                    //var CpuRAMresult = db.QueryFirstOrDefault("ServerLoadMonitoring_GetCPUAndMemoryUsage", commandType: CommandType.StoredProcedure);
+
+                    //// Обработка результата
+                    //if (CpuRAMresult != null)
+                    //{
+                    //    // Здесь вы можете использовать результат result
+                    //    // Например, записать его в свойства или выполнить другие действия
+                    //    CpuTime = Convert.ToInt32(CpuRAMresult.CPU_Load_Percentage);
+                    //    MemoryUsagePercentage = Convert.ToInt32(CpuRAMresult.Memory_Usage_Percentage);
+                    //}
                     // Получение списка хранимых процедур
                     var storedProcedures = db.Query<string>("ServerLoadMonitoring_GetAllStoredProcedures", commandType: CommandType.StoredProcedure).ToList();
                     this.StoredProcedures = storedProcedures;
@@ -293,7 +372,10 @@ namespace ServerLoadMonitoringDataModels
                 LastBackupTime = this.LastBackupTime,
                 Placement = this.Placement,
                 CollectionNumber = this.CollectionNumber,
-                UsersCount = this.UsersCount
+                UsersCount = this.UsersCount,
+                CpuUsage = this.CpuUsage,
+                UsedMemoryPercents = this.UsedMemoryPercents
+
             };
         }
     }

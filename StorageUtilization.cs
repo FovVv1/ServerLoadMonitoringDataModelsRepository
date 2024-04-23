@@ -34,6 +34,8 @@ namespace ServerLoadMonitoringDataModels
             this.CollectionNumber = 0;
             this.MicroservicesProceduresCount = new List<ProcedureCounter>();
             this.UsersCount = 0;
+            this.UsedMemoryPercents = 0;
+            this.CpuUsage = 0;
         }
         public StorageUtilization(string ip, MetricType type, long checkInterval)
         {
@@ -45,6 +47,8 @@ namespace ServerLoadMonitoringDataModels
             this.CollectionNumber = 0;
             this.MicroservicesProceduresCount = new List<ProcedureCounter>();
             this.UsersCount = 0;
+            this.UsedMemoryPercents = 0;
+            this.CpuUsage = 0;
         }
 
         public int UsersCount { get; set; }
@@ -56,7 +60,9 @@ namespace ServerLoadMonitoringDataModels
         public long CheckInterval { get; set; }
 
         public long LastCheckTime { get; set; }
-        
+
+        public float CpuUsage { get; set; }
+        public float UsedMemoryPercents { get; set; }
         public BackupMonitorData Data { get; set; }
         public  void GetMetric(ElConnectionClient elConnectionClient, ElMessageServer elMessageServer)
         {
@@ -284,7 +290,9 @@ namespace ServerLoadMonitoringDataModels
                 Data = (this.Data != null) ? JsonConvert.DeserializeObject<BackupMonitorData>(JsonConvert.SerializeObject(this.Data)) : null,
                 Placement = this.Placement,
                 CollectionNumber = this.CollectionNumber,
-                UsersCount = this.UsersCount
+                UsersCount = this.UsersCount,
+                CpuUsage = this.CpuUsage,
+                UsedMemoryPercents = this.UsedMemoryPercents
             };
 
             return clone;
